@@ -153,8 +153,20 @@ public class MethodRewriteContext
                         continue;
                     }
 
+                    TypeSignature? constraintSig = null;
+                    if (oldConstraint.Constraint != null)
+                    {
+                        try
+                        {
+                            constraintSig = oldConstraint.Constraint.ToTypeSignature(DeclaringType.NewType.DeclaringModule?.RuntimeContext);
+                        }
+                        catch (ArgumentException)
+                        {
+                            constraintSig = new TypeDefOrRefSignature(oldConstraint.Constraint, false);
+                        }
+                    }
                     newParameter.Constraints.Add(new GenericParameterConstraint(
-                        DeclaringType.AssemblyContext.RewriteTypeRef(oldConstraint.Constraint?.ToTypeSignature(null)).ToTypeDefOrRef()));
+                        DeclaringType.AssemblyContext.RewriteTypeRef(constraintSig).ToTypeDefOrRef()));
                 }
             }
 

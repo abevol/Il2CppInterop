@@ -4,6 +4,7 @@ using System.Text;
 using AsmResolver;
 using AsmResolver.DotNet;
 using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures;
 
 namespace Il2CppInterop.Generator.Extensions;
 
@@ -183,7 +184,16 @@ public static class StringEx
         var builder = new StringBuilder();
         if (typeRef is GenericInstanceTypeSignature genericInstance)
         {
-            builder.Append(genericInstance.GenericType.ToTypeSignature(null).GetUnmangledName(declaringType, declaringMethod));
+            TypeSignature genericTypeSig;
+            try
+            {
+                genericTypeSig = genericInstance.GenericType.ToTypeSignature(declaringType?.DeclaringModule?.RuntimeContext);
+            }
+            catch (ArgumentException)
+            {
+                genericTypeSig = new TypeDefOrRefSignature(genericInstance.GenericType, false);
+            }
+            builder.Append(genericTypeSig.GetUnmangledName(declaringType, declaringMethod));
             foreach (var genericArgument in genericInstance.TypeArguments)
             {
                 builder.Append("_");
