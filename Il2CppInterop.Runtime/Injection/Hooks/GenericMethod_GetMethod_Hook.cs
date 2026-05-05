@@ -51,7 +51,21 @@ namespace Il2CppInterop.Runtime.Injection.Hooks
                 pattern = "\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x56\x57\x41\x54\x41\x56\x41\x57\x48\x81\xEC\xB0\x00",
                 mask = "xxxxxxxxxxxxxxxxxxxxxxx",
                 xref = false
-            }
+            },
+            // Unity 2020.3.46f1c1 (x64)
+            new MemoryUtils.SignatureDefinition
+            {
+                pattern = "\x48\x89\x5C\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x40\x0F\xB6\xFA\x48\x8B\xD9\x48\x85\xC9",
+                mask = "xxxxxxxxxxxxxxxxxxxxxxxx",
+                xref = false
+            },
+            // Unity 6000.0.61f1 (x64)
+            new MemoryUtils.SignatureDefinition
+            {
+                pattern = "\x48\x89\x5C\x24\x10\x57\x48\x83\xEC\x40\x48\x8B\xD9\x48\x83\x39\x00\x75\xFF\xBA\x58",
+                mask = "xxxxxxxxxxxxxxxxxx?xx",
+                xref = false
+            },
         };
 
         // Compilers might change method location (Unity 2021.2+)
@@ -88,8 +102,10 @@ namespace Il2CppInterop.Runtime.Injection.Hooks
 
                         var shimXrefs = XrefScannerLowLevel.JumpTargets(shim).ToArray();
 
-                        // If the xref count is 1, it probably means the target is after ret
-                        if (Il2CppInteropRuntime.Instance.UnityVersion.Major == 2020 && shimXrefs.Length == 1)
+                        // Unity 2020's compiler inconsistently places shim xrefs
+                        // (before/after ret, inlined, etc.); unconditionally use
+                        // extended scan (include retn) for reliable resolution
+                        if (Il2CppInteropRuntime.Instance.UnityVersion.Major == 2020)
                         {
                             shimXrefs = XrefScannerLowLevel.JumpTargets(shim, true).ToArray();
                         }
