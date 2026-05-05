@@ -1,3 +1,4 @@
+using AsmResolver.DotNet;
 using AsmResolver.DotNet.Signatures;
 using Il2CppInterop.Generator.Contexts;
 using Il2CppInterop.Generator.Extensions;
@@ -39,7 +40,25 @@ public static class Pass11ComputeTypeSpecifics
                 return;
             }
 
-            var fieldTypeContext = typeContext.AssemblyContext.GlobalContext.GetNewTypeForOriginal(fieldType.Resolve()!);
+            TypeRewriteContext? fieldTypeContext = null;
+            try
+            {
+                var resolved = ((ITypeDescriptor)fieldType.ToTypeDefOrRef()).Resolve(typeContext.NewType.DeclaringModule?.RuntimeContext);
+                if (resolved != null)
+                    fieldTypeContext = typeContext.AssemblyContext.GlobalContext.GetNewTypeForOriginal(resolved);
+            }
+            catch
+            {
+                // Type could not be resolved (e.g., external assembly not in RuntimeContext);
+                // conservatively treat as NonBlittableStruct.
+            }
+
+            if (fieldTypeContext == null)
+            {
+                typeContext.ComputedTypeSpecifics = TypeRewriteContext.TypeSpecifics.NonBlittableStruct;
+                return;
+            }
+
             ComputeSpecifics(fieldTypeContext);
             if (fieldTypeContext.ComputedTypeSpecifics != TypeRewriteContext.TypeSpecifics.BlittableStruct)
             {

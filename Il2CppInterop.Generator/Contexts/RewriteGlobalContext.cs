@@ -1,3 +1,4 @@
+using System.Linq;
 using AsmResolver.DotNet;
 using AsmResolver.DotNet.Signatures;
 using AsmResolver.PE.DotNet.Metadata.Tables;
@@ -29,6 +30,9 @@ public class RewriteGlobalContext : IDisposable
         UnityAssemblies = unityAssemblies;
 
         Il2CppAssemblyResolver assemblyResolver = new();
+        var referenceModule = gameAssemblies.Assemblies.FirstOrDefault()?.ManifestModule;
+        var runtimeContext = new RuntimeContext(referenceModule?.OriginalTargetRuntime
+            ?? DotNetRuntimeInfo.NetFramework(4, 0), assemblyResolver);
 
         foreach (var sourceAssembly in gameAssemblies.Assemblies)
         {
@@ -42,11 +46,32 @@ public class RewriteGlobalContext : IDisposable
             var newModule = new ModuleDefinition(sourceAssembly.ManifestModule?.Name.UnSystemify(options), CorlibReferences.TargetCorlib);
             newAssembly.Modules.Add(newModule);
 
-            newModule.MetadataResolver = new DefaultMetadataResolver(assemblyResolver);
+            runtimeContext.AddAssembly(newAssembly);
             assemblyResolver.AddToCache(newAssembly);
+
+            // Register the original assembly in the runtime context so that type resolution
+            // (e.g., Resolve()) can find types from the original assemblies (mscorlib, game assemblies, etc.)
+            if (sourceAssembly.RuntimeContext is null)
+                runtimeContext.AddAssembly(sourceAssembly);
+            assemblyResolver.AddToCache(sourceAssembly);
 
             var assemblyRewriteContext = new AssemblyRewriteContext(this, sourceAssembly, newAssembly);
             AddAssemblyContext(assemblyName, assemblyRewriteContext);
+        }
+
+        // Register unity/base library assemblies (mscorlib, etc.) in the runtime context
+        // so that Resolve() can find types from these assemblies during IL rewriting.
+        foreach (var unityAssembly in unityAssemblies.Assemblies)
+        {
+            try
+            {
+                runtimeContext.AddAssembly(unityAssembly);
+            }
+            catch (ArgumentException)
+            {
+                // Assembly already present in context (e.g., overlap with gameAssemblies).
+            }
+            assemblyResolver.AddToCache(unityAssembly);
         }
     }
 
@@ -102,7 +127,7 @@ public class RewriteGlobalContext : IDisposable
             or GenericInstanceTypeSignature)
             return TypeRewriteContext.TypeSpecifics.ReferenceType;
 
-        var fieldTypeContext = GetNewTypeForOriginal(typeRef.Resolve() ?? throw new($"Could not resolve {typeRef.FullName}"));
+        var fieldTypeContext = GetNewTypeForOriginal(typeRef.Resolve(myAssemblies.Values.First().NewAssembly.ManifestModule?.RuntimeContext) ?? throw new($"Could not resolve {typeRef.FullName}"));
         return fieldTypeContext.ComputedTypeSpecifics;
     }
 
@@ -154,7 +179,7 @@ public class RewriteGlobalContext : IDisposable
 
                 foreach (var constraint in genericParameter.Constraints)
                 {
-                    var newConstraintType = constraint.Constraint != null ? resolve(constraint.Constraint.ToTypeSignature())?.ToTypeDefOrRef() : null;
+                    var newConstraintType = constraint.Constraint != null ? resolve(constraint.Constraint.ToTypeSignature(null))?.ToTypeDefOrRef() : null;
                     var newConstraint = new GenericParameterConstraint(newConstraintType);
 
                     // We don't need to copy custom attributes on constraints for generic parameters because Il2Cpp doesn't support them.

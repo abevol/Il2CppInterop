@@ -55,8 +55,8 @@ public class MethodRewriteContext
 
         var newAttributes = AdjustAttributes(originalMethod.Attributes, originalMethod.Name == "Finalize");
         var newSignature = (newAttributes & MethodAttributes.Static) != 0
-            ? MethodSignature.CreateStatic(declaringType.AssemblyContext.Imports.Module.Void(), originalMethod.GenericParameters.Count)
-            : MethodSignature.CreateInstance(declaringType.AssemblyContext.Imports.Module.Void(), originalMethod.GenericParameters.Count);
+            ? MethodSignature.CreateStatic(declaringType.AssemblyContext.Imports.Module.Void(), originalMethod.GenericParameters.Count, new TypeSignature[0])
+            : MethodSignature.CreateInstance(declaringType.AssemblyContext.Imports.Module.Void(), originalMethod.GenericParameters.Count, new TypeSignature[0]);
         var newMethod = new MethodDefinition("", newAttributes, newSignature);
         newMethod.CilMethodBody = new();
         NewMethod = newMethod;
@@ -137,9 +137,9 @@ public class MethodRewriteContext
                 var oldParameter = genericParams[index];
                 var genericParameter = new GenericParameter(oldParameter.Name.MakeValidInSource());
                 genericMethodInfoStoreType.GenericParameters.Add(genericParameter);
-                selfSubstRef.TypeArguments.Add(genericParameter.ToTypeSignature());
+                selfSubstRef.TypeArguments.Add(new GenericParameterSignature(DeclaringType.NewType.DeclaringModule!, GenericParameterType.Method, index));
                 var newParameter = NewMethod.GenericParameters[index];
-                selfSubstMethodRef.TypeArguments.Add(newParameter.ToTypeSignature());
+                selfSubstMethodRef.TypeArguments.Add(new GenericParameterSignature(DeclaringType.NewType.DeclaringModule!, GenericParameterType.Method, index));
 
                 foreach (var oldConstraint in oldParameter.Constraints)
                 {
@@ -154,7 +154,7 @@ public class MethodRewriteContext
                     }
 
                     newParameter.Constraints.Add(new GenericParameterConstraint(
-                        DeclaringType.AssemblyContext.RewriteTypeRef(oldConstraint.Constraint?.ToTypeSignature()).ToTypeDefOrRef()));
+                        DeclaringType.AssemblyContext.RewriteTypeRef(oldConstraint.Constraint?.ToTypeSignature(null)).ToTypeDefOrRef()));
                 }
             }
 

@@ -70,13 +70,13 @@ public class TypeRewriteContext
         if (NewType.HasGenericParameters())
         {
             var genericInstanceType = new GenericInstanceTypeSignature(NewType, NewType.IsValueType());
-            foreach (var newTypeGenericParameter in NewType.GenericParameters)
-                genericInstanceType.TypeArguments.Add(newTypeGenericParameter.ToTypeSignature());
+            for (var i = 0; i < NewType.GenericParameters.Count; i++)
+                genericInstanceType.TypeArguments.Add(new GenericParameterSignature(NewType.DeclaringModule!, GenericParameterType.Type, i));
             SelfSubstitutedRef = NewType.DeclaringModule!.DefaultImporter.ImportTypeSignature(genericInstanceType).ToTypeDefOrRef();
             var genericTypeRef = new GenericInstanceTypeSignature(
                 AssemblyContext.Imports.Il2CppClassPointerStore.ToTypeDefOrRef(),
                 AssemblyContext.Imports.Il2CppClassPointerStore.IsValueType(),
-                SelfSubstitutedRef.ToTypeSignature());
+                new[] { SelfSubstitutedRef.ToTypeSignature(null) });
             ClassPointerFieldRef = ReferenceCreator.CreateFieldReference("NativeClassPtr", AssemblyContext.Imports.Module.IntPtr(),
                 NewType.DeclaringModule.DefaultImporter.ImportType(genericTypeRef.ToTypeDefOrRef()));
         }
@@ -86,11 +86,11 @@ public class TypeRewriteContext
             var genericTypeRef = new GenericInstanceTypeSignature(
                 AssemblyContext.Imports.Il2CppClassPointerStore.ToTypeDefOrRef(),
                 AssemblyContext.Imports.Il2CppClassPointerStore.IsValueType());
-            if (OriginalType.ToTypeSignature().IsPrimitive() || OriginalType.FullName == "System.String")
+            if (OriginalType.ToTypeSignature(null).IsPrimitive() || OriginalType.FullName == "System.String")
                 genericTypeRef.TypeArguments.Add(
                     NewType.DeclaringModule!.ImportCorlibReference(OriginalType.FullName));
             else
-                genericTypeRef.TypeArguments.Add(SelfSubstitutedRef.ToTypeSignature());
+                genericTypeRef.TypeArguments.Add(SelfSubstitutedRef.ToTypeSignature(null));
             ClassPointerFieldRef = ReferenceCreator.CreateFieldReference("NativeClassPtr", AssemblyContext.Imports.Module.IntPtr(),
                 NewType.DeclaringModule!.DefaultImporter.ImportType(genericTypeRef.ToTypeDefOrRef()));
         }

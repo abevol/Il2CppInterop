@@ -144,10 +144,10 @@ public static class UnstripTranslator
                 var fieldArg = (IFieldDescriptor)bodyInstruction.Operand;
                 var useSystemCorlibType = fieldArg.Signature?.HasThis ?? true;
                 var fieldDeclarer =
-                    Pass80UnstripMethods.ResolveTypeInNewAssembliesRaw(globalContext, fieldArg.DeclaringType!.ToTypeSignature(), imports, useSystemCorlibType);
+                    Pass80UnstripMethods.ResolveTypeInNewAssembliesRaw(globalContext, fieldArg.DeclaringType!.ToTypeSignature(null), imports, useSystemCorlibType);
                 if (fieldDeclarer == null)
                     return false;
-                var fieldDeclarerDefinition = fieldDeclarer.Resolve();
+                var fieldDeclarerDefinition = fieldDeclarer.ToTypeDefOrRef().Resolve(imports.Module.RuntimeContext);
                 if (fieldDeclarerDefinition == null)
                     return false;
 
@@ -202,7 +202,7 @@ public static class UnstripTranslator
                 var methodArg = (IMethodDescriptor)bodyInstruction.Operand;
                 var useSystemCorlibType = methodArg.Signature?.HasThis ?? true;
                 var methodDeclarer =
-                    Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, methodArg.DeclaringType?.ToTypeSignature(), imports, useSystemCorlibType);
+                    Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, methodArg.DeclaringType?.ToTypeSignature(null), imports, useSystemCorlibType);
                 if (methodDeclarer == null)
                     return false;
 
@@ -212,8 +212,8 @@ public static class UnstripTranslator
                     return false;
 
                 var newMethodSignature = methodArg.Signature!.HasThis
-                    ? MethodSignature.CreateInstance(newReturnType, methodArg.Signature.GenericParameterCount)
-                    : MethodSignature.CreateStatic(newReturnType, methodArg.Signature.GenericParameterCount);
+                    ? MethodSignature.CreateInstance(newReturnType, methodArg.Signature.GenericParameterCount, new TypeSignature[0])
+                    : MethodSignature.CreateStatic(newReturnType, methodArg.Signature.GenericParameterCount, new TypeSignature[0]);
                 foreach (var methodArgParameter in methodArg.Signature.ParameterTypes)
                 {
                     var newParamType = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext,
@@ -254,7 +254,7 @@ public static class UnstripTranslator
             }
             else if (bodyInstruction.OpCode.OperandType == CilOperandType.InlineType)
             {
-                var targetType = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, ((ITypeDefOrRef)bodyInstruction.Operand).ToTypeSignature(), imports);
+                var targetType = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, ((ITypeDefOrRef)bodyInstruction.Operand).ToTypeSignature(null), imports);
                 if (targetType == null)
                     return false;
 
@@ -265,13 +265,13 @@ public static class UnstripTranslator
                     // Castclass is only used for reference types.
                     // Both can be translated to Il2CppObjectBase.Cast<T>().
                     var newInstruction = targetBuilder.Add(OpCodes.Call,
-                        imports.Module.DefaultImporter.ImportMethod(imports.Il2CppObjectBase_Cast.Value.MakeGenericInstanceMethod(targetType)));
+                        imports.Module.DefaultImporter.ImportMethod(imports.Il2CppObjectBase_Cast.Value.MakeGenericInstanceMethod(new[] { targetType })));
                     instructionMap.Add(bodyInstruction, newInstruction);
                 }
                 else if (bodyInstruction.OpCode == OpCodes.Isinst && !targetType.IsValueType)
                 {
                     var newInstruction = targetBuilder.Add(OpCodes.Call,
-                        imports.Module.DefaultImporter.ImportMethod(imports.Il2CppObjectBase_TryCast.Value.MakeGenericInstanceMethod(targetType)));
+                        imports.Module.DefaultImporter.ImportMethod(imports.Il2CppObjectBase_TryCast.Value.MakeGenericInstanceMethod(new[] { targetType })));
                     instructionMap.Add(bodyInstruction, newInstruction);
                 }
                 else if (bodyInstruction.OpCode == OpCodes.Newarr)
@@ -289,7 +289,7 @@ public static class UnstripTranslator
                     }
                     else
                     {
-                        il2cppTypeArray = imports.Il2CppReferenceArray.MakeGenericInstanceType(targetType).ToTypeDefOrRef();
+                        il2cppTypeArray = new GenericInstanceTypeSignature(imports.Il2CppReferenceArray.ToTypeDefOrRef(), false, new[] { targetType }).ToTypeDefOrRef();
                     }
                     targetBuilder.Add(OpCodes.Newobj, imports.Module.DefaultImporter.ImportMethod(
                         ReferenceCreator.CreateInstanceMethodReference(".ctor", imports.Module.Void(), il2cppTypeArray, imports.Module.Long())));
@@ -330,12 +330,12 @@ public static class UnstripTranslator
                 {
                     case ITypeDefOrRef typeDefOrRef:
                         {
-                            var targetTok = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, typeDefOrRef.ToTypeSignature(), imports);
+                            var targetTok = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, typeDefOrRef.ToTypeSignature(null), imports);
                             if (targetTok == null)
                                 return false;
 
                             var newInstruction = targetBuilder.Add(OpCodes.Call,
-                                imports.Module.DefaultImporter.ImportMethod(imports.Il2CppSystemRuntimeTypeHandleGetRuntimeTypeHandle.Value.MakeGenericInstanceMethod(targetTok)));
+                                imports.Module.DefaultImporter.ImportMethod(imports.Il2CppSystemRuntimeTypeHandleGetRuntimeTypeHandle.Value.MakeGenericInstanceMethod(new[] { targetTok })));
                             instructionMap.Add(bodyInstruction, newInstruction);
                         }
                         break;
@@ -461,7 +461,7 @@ public static class UnstripTranslator
                     return false;
             }
 
-            switch (exceptionHandler.ExceptionType?.ToTypeSignature())
+            switch (exceptionHandler.ExceptionType?.ToTypeSignature(null))
             {
                 case null:
                     break;

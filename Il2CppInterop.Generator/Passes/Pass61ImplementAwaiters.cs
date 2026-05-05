@@ -55,7 +55,7 @@ public static class Pass61ImplementAwaiters
                 }
 
                 var onCompletedAttr = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
-                var sig = MethodSignature.CreateInstance(voidRef, [actionUntypedRef.Value.ToTypeSignature()]);
+                var sig = MethodSignature.CreateInstance(voidRef, [actionUntypedRef.Value.ToTypeSignature(null)]);
 
                 var proxyOnCompleted = new MethodDefinition(nameof(INotifyCompletion.OnCompleted), onCompletedAttr, sig);
                 var parameter = proxyOnCompleted.Parameters[0].GetOrCreateDefinition();
@@ -77,7 +77,7 @@ public static class Pass61ImplementAwaiters
                 if (genericParameterCount > 0)
                 {
                     var typeArguments = Enumerable.Range(0, genericParameterCount).Select(i => new GenericParameterSignature(GenericParameterType.Type, i)).ToArray();
-                    var interopOnCompleteGeneric = typeContext.NewType.MakeGenericInstanceType(typeArguments)
+                    var interopOnCompleteGeneric = typeContext.NewType.MakeGenericInstanceType(null, typeArguments)
                         .ToTypeDefOrRef()
                         .CreateMemberReference(interopOnCompleted.Name, interopOnCompleted.Signature);
                     instructions.Add(CilOpCodes.Call, interopOnCompleteGeneric);

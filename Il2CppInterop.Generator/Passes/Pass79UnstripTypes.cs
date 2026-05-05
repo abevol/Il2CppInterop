@@ -108,7 +108,7 @@ public static class Pass79UnstripTypes
         {
             TypeSignature fieldType = sourceEnumField.Name == "value__"
                 ? imports.Module.ImportCorlibReference(sourceEnumField.Signature!.FieldType.FullName)
-                : newType.ToTypeSignature();
+                : newType.ToTypeSignature(null);
             var newField = new FieldDefinition(sourceEnumField.Name, sourceEnumField.Attributes, new FieldSignature(fieldType));
             newField.Constant = sourceEnumField.Constant;
             newType.Fields.Add(newField);
@@ -121,7 +121,7 @@ public static class Pass79UnstripTypes
     {
         if (!type.IsValueType()) return false;
 
-        var typeSignature = type.ToTypeSignature();
+        var typeSignature = type.ToTypeSignature(null);
         foreach (var fieldDefinition in type.Fields)
         {
             if (fieldDefinition.IsStatic || SignatureComparer.Default.Equals(fieldDefinition.Signature?.FieldType, typeSignature))
@@ -131,7 +131,7 @@ public static class Pass79UnstripTypes
                 return true;
 
             if (fieldDefinition.Signature.FieldType.Namespace?.StartsWith("System") ?? false &&
-                HasNonBlittableFields(fieldDefinition.Signature.FieldType.Resolve()))
+                HasNonBlittableFields(fieldDefinition.Signature.FieldType.ToTypeDefOrRef().Resolve(fieldDefinition.DeclaringModule?.RuntimeContext)))
                 return true;
         }
 

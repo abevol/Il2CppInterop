@@ -32,7 +32,7 @@ internal static class FieldAccessorGenerator
             var localIsPointer = false;
             if (field.Signature!.FieldType.IsValueType() && !property.Signature.ReturnType.IsValueType())
             {
-                var pointerStore = imports.Il2CppClassPointerStore.MakeGenericInstanceType(property.Signature.ReturnType).ToTypeDefOrRef();
+                var pointerStore = new GenericInstanceTypeSignature(imports.Il2CppClassPointerStore.ToTypeDefOrRef(), false, new[] { property.Signature.ReturnType }).ToTypeDefOrRef();
                 var pointerStoreType = property.DeclaringType.DeclaringModule!.DefaultImporter.ImportType(pointerStore);
                 getterBody.Add(OpCodes.Ldsfld,
                     new MemberReference(pointerStoreType, "NativeClassPtr", new FieldSignature(imports.Module.IntPtr())));

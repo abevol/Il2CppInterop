@@ -20,7 +20,7 @@ public static class UnstripGenerator
 
         var constructor = new MethodDefinition(".ctor",
             MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RuntimeSpecialName |
-            MethodAttributes.Public, MethodSignature.CreateInstance(imports.Module.Void(), imports.Module.Object(), imports.Module.IntPtr()));
+            MethodAttributes.Public, MethodSignature.CreateInstance(imports.Module.Void(), new[] { imports.Module.Object(), imports.Module.IntPtr() }));
         constructor.ImplAttributes = MethodImplAttributes.CodeTypeMask;
         delegateType.Methods.Add(constructor);
 
@@ -97,7 +97,7 @@ public static class UnstripGenerator
         MethodDefinition unityMethod, RuntimeAssemblyReferences imports)
     {
         var delegateField = new FieldDefinition(delegateType.Name + "Field",
-            FieldAttributes.Static | FieldAttributes.Private | FieldAttributes.InitOnly, new FieldSignature(delegateType.ToTypeSignature()));
+            FieldAttributes.Static | FieldAttributes.Private | FieldAttributes.InitOnly, new FieldSignature(delegateType.ToTypeSignature(null)));
         enclosingType.Fields.Add(delegateField);
 
         var staticCtor = enclosingType.GetOrCreateStaticConstructor();
@@ -108,7 +108,7 @@ public static class UnstripGenerator
 
         bodyProcessor.Add(OpCodes.Ldstr, GetICallSignature(unityMethod));
 
-        var methodRef = imports.IL2CPP_ResolveICall.Value.MakeGenericInstanceMethod(delegateType.ToTypeSignature());
+        var methodRef = imports.IL2CPP_ResolveICall.Value.MakeGenericInstanceMethod(new[] { delegateType.ToTypeSignature(null) });
         bodyProcessor.Add(OpCodes.Call, enclosingType.DeclaringModule!.DefaultImporter.ImportMethod(methodRef));
         bodyProcessor.Add(OpCodes.Stsfld, delegateField);
 
