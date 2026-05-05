@@ -55,7 +55,7 @@ public static class Pass61ImplementAwaiters
                 }
 
                 var onCompletedAttr = MethodAttributes.Public | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual;
-                var sig = MethodSignature.CreateInstance(voidRef, [actionUntypedRef.Value.ToTypeSignature(null)]);
+                var sig = MethodSignature.CreateInstance(voidRef, [new TypeDefOrRefSignature(actionUntypedRef.Value, false)]);
 
                 var proxyOnCompleted = new MethodDefinition(nameof(INotifyCompletion.OnCompleted), onCompletedAttr, sig);
                 var parameter = proxyOnCompleted.Parameters[0].GetOrCreateDefinition();

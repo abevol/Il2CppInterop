@@ -65,15 +65,15 @@ public static class Pass30GenerateGenericMethodStoreConstructors
 
                             ctorBuilder.Add(OpCodes.Call,
                                 new MemberReference(il2CppSystemTypeRef, "internal_from_handle",
-                                MethodSignature.CreateStatic(il2CppSystemTypeRef.ToTypeSignature(null), new[] { assemblyContext.Imports.Module.IntPtr() })));
+                                MethodSignature.CreateStatic(new TypeDefOrRefSignature(il2CppSystemTypeRef, false), new[] { assemblyContext.Imports.Module.IntPtr() })));
                             ctorBuilder.Add(OpCodes.Stelem_Ref);
                         }
 
-                        var il2CppTypeArray = new GenericInstanceTypeSignature(assemblyContext.Imports.Il2CppReferenceArray.ToTypeDefOrRef(), false, new[] { il2CppSystemTypeRef.ToTypeSignature(null) });
+                        var il2CppTypeArray = new GenericInstanceTypeSignature(assemblyContext.Imports.Il2CppReferenceArray.ToTypeDefOrRef(), false, new[] { new TypeDefOrRefSignature(il2CppSystemTypeRef, false) });
                         ctorBuilder.Add(OpCodes.Newobj,
                             ReferenceCreator.CreateInstanceMethodReference(".ctor", assemblyContext.Imports.Module.Void(), il2CppTypeArray.ToTypeDefOrRef(), new GenericParameterSignature(GenericParameterType.Type, 0).MakeSzArrayType()));
                         ctorBuilder.Add(OpCodes.Call,
-                            ReferenceCreator.CreateInstanceMethodReference(nameof(MethodInfo.MakeGenericMethod), il2CppSystemReflectionMethodInfoRef.ToTypeSignature(null),
+                            ReferenceCreator.CreateInstanceMethodReference(nameof(MethodInfo.MakeGenericMethod), new TypeDefOrRefSignature(il2CppSystemReflectionMethodInfoRef, false),
                                     il2CppSystemReflectionMethodInfoRef, il2CppTypeArray));
                         ctorBuilder.Add(OpCodes.Call, assemblyContext.Imports.IL2CPP_Il2CppObjectBaseToPtrNotNull.Value);
 

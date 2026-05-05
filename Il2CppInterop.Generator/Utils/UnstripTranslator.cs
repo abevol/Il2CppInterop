@@ -143,8 +143,11 @@ public static class UnstripTranslator
 
                 var fieldArg = (IFieldDescriptor)bodyInstruction.Operand;
                 var useSystemCorlibType = fieldArg.Signature?.HasThis ?? true;
+                TypeSignature? fieldDeclSig;
+                try { fieldDeclSig = fieldArg.DeclaringType!.ToTypeSignature(imports.Module.RuntimeContext); }
+                catch (ArgumentException) { fieldDeclSig = null; }
                 var fieldDeclarer =
-                    Pass80UnstripMethods.ResolveTypeInNewAssembliesRaw(globalContext, fieldArg.DeclaringType!.ToTypeSignature(null), imports, useSystemCorlibType);
+                    Pass80UnstripMethods.ResolveTypeInNewAssembliesRaw(globalContext, fieldDeclSig, imports, useSystemCorlibType);
                 if (fieldDeclarer == null)
                     return false;
                 var fieldDeclarerDefinition = fieldDeclarer.ToTypeDefOrRef().Resolve(imports.Module.RuntimeContext);
@@ -201,8 +204,11 @@ public static class UnstripTranslator
 
                 var methodArg = (IMethodDescriptor)bodyInstruction.Operand;
                 var useSystemCorlibType = methodArg.Signature?.HasThis ?? true;
+                TypeSignature? declSig = null;
+                try { declSig = methodArg.DeclaringType?.ToTypeSignature(imports.Module.RuntimeContext); }
+                catch (ArgumentException) { }
                 var methodDeclarer =
-                    Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, methodArg.DeclaringType?.ToTypeSignature(null), imports, useSystemCorlibType);
+                    Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, declSig, imports, useSystemCorlibType);
                 if (methodDeclarer == null)
                     return false;
 
@@ -254,7 +260,10 @@ public static class UnstripTranslator
             }
             else if (bodyInstruction.OpCode.OperandType == CilOperandType.InlineType)
             {
-                var targetType = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, ((ITypeDefOrRef)bodyInstruction.Operand).ToTypeSignature(null), imports);
+                TypeSignature? targetTypeSig;
+                try { targetTypeSig = ((ITypeDefOrRef)bodyInstruction.Operand).ToTypeSignature(imports.Module.RuntimeContext); }
+                catch (ArgumentException) { targetTypeSig = null; }
+                var targetType = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, targetTypeSig, imports);
                 if (targetType == null)
                     return false;
 
@@ -330,7 +339,10 @@ public static class UnstripTranslator
                 {
                     case ITypeDefOrRef typeDefOrRef:
                         {
-                            var targetTok = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, typeDefOrRef.ToTypeSignature(null), imports);
+                            TypeSignature? tokSig;
+                            try { tokSig = typeDefOrRef.ToTypeSignature(imports.Module.RuntimeContext); }
+                            catch (ArgumentException) { tokSig = null; }
+                            var targetTok = Pass80UnstripMethods.ResolveTypeInNewAssemblies(globalContext, tokSig, imports);
                             if (targetTok == null)
                                 return false;
 
@@ -461,7 +473,13 @@ public static class UnstripTranslator
                     return false;
             }
 
-            switch (exceptionHandler.ExceptionType?.ToTypeSignature(null))
+            TypeSignature? exTypeSig = null;
+            if (exceptionHandler.ExceptionType != null)
+            {
+                try { exTypeSig = exceptionHandler.ExceptionType.ToTypeSignature(imports.Module.RuntimeContext); }
+                catch (ArgumentException) { }
+            }
+            switch (exTypeSig)
             {
                 case null:
                     break;

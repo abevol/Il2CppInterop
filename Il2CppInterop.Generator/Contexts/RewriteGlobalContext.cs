@@ -127,7 +127,13 @@ public class RewriteGlobalContext : IDisposable
             or GenericInstanceTypeSignature)
             return TypeRewriteContext.TypeSpecifics.ReferenceType;
 
-        var fieldTypeContext = GetNewTypeForOriginal(typeRef.Resolve(myAssemblies.Values.First().NewAssembly.ManifestModule?.RuntimeContext) ?? throw new($"Could not resolve {typeRef.FullName}"));
+        TypeDefinition? resolvedType = null;
+        try { resolvedType = typeRef.Resolve(myAssemblies.Values.First().NewAssembly.ManifestModule?.RuntimeContext); } catch { }
+        if (resolvedType == null || resolvedType.DeclaringModule?.Assembly == null)
+            return TypeRewriteContext.TypeSpecifics.NonBlittableStruct;
+        if (!myAssembliesByOld.ContainsKey(resolvedType.DeclaringModule.Assembly))
+            return TypeRewriteContext.TypeSpecifics.NonBlittableStruct;
+        var fieldTypeContext = GetNewTypeForOriginal(resolvedType);
         return fieldTypeContext.ComputedTypeSpecifics;
     }
 

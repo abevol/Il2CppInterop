@@ -86,7 +86,13 @@ public static class Pass80UnstripMethods
                                 continue;
                             }
 
-                            var newType = ResolveTypeInNewAssemblies(context, genericParameterConstraint.Constraint?.ToTypeSignature(null),
+                            TypeSignature? constraintSig = null;
+                            if (genericParameterConstraint.Constraint != null)
+                            {
+                                try { constraintSig = genericParameterConstraint.Constraint.ToTypeSignature(imports.Module.RuntimeContext); }
+                                catch (ArgumentException) { }
+                            }
+                            var newType = ResolveTypeInNewAssemblies(context, constraintSig,
                                 imports);
                             if (newType != null)
                                 newParameter.Constraints.Add(new GenericParameterConstraint(newType.ToTypeDefOrRef()));
@@ -224,7 +230,10 @@ public static class Pass80UnstripMethods
         if (unityType is CustomModifierTypeSignature customModifier)
         {
             var resolvedElementType = ResolveTypeInNewAssemblies(context, customModifier.BaseType, imports);
-            var resolvedModifierType = ResolveTypeInNewAssemblies(context, customModifier.ModifierType.ToTypeSignature(null), imports);
+            TypeSignature? modifierSig = null;
+            try { modifierSig = customModifier.ModifierType.ToTypeSignature(imports.Module.RuntimeContext); }
+            catch (ArgumentException) { /* modifier type cannot be resolved */ }
+            var resolvedModifierType = ResolveTypeInNewAssemblies(context, modifierSig, imports);
             return resolvedElementType is not null && resolvedModifierType is not null
                 ? new CustomModifierTypeSignature(resolvedModifierType.ToTypeDefOrRef(), customModifier.IsRequired, resolvedElementType)
                 : null;
@@ -232,7 +241,10 @@ public static class Pass80UnstripMethods
 
         if (unityType is GenericInstanceTypeSignature genericInstance)
         {
-            var baseRef = ResolveTypeInNewAssembliesRaw(context, genericInstance.GenericType.ToTypeSignature(null), imports);
+            TypeSignature? baseTypeSig;
+            try { baseTypeSig = genericInstance.GenericType.ToTypeSignature(imports.Module.RuntimeContext); }
+            catch (ArgumentException) { baseTypeSig = null; }
+            var baseRef = ResolveTypeInNewAssembliesRaw(context, baseTypeSig, imports);
             if (baseRef == null) return null;
             var newInstance = new GenericInstanceTypeSignature(baseRef.ToTypeDefOrRef(), baseRef.IsValueType());
             foreach (var unityGenericArgument in genericInstance.TypeArguments)
@@ -256,7 +268,10 @@ public static class Pass80UnstripMethods
 
         if (unityType.DeclaringType != null)
         {
-            var enclosingResolvedType = ResolveTypeInNewAssembliesRaw(context, unityType.DeclaringType.ToTypeSignature(null), imports);
+            TypeSignature? declTypeSig;
+            try { declTypeSig = unityType.DeclaringType.ToTypeSignature(imports.Module.RuntimeContext); }
+            catch (ArgumentException) { declTypeSig = null; }
+            var enclosingResolvedType = ResolveTypeInNewAssembliesRaw(context, declTypeSig, imports);
             if (enclosingResolvedType == null) return null;
             var resolvedNestedType = enclosingResolvedType.ToTypeDefOrRef().Resolve(imports.Module.RuntimeContext)!.NestedTypes
                 .FirstOrDefault(it => it.Name == unityType.Name);

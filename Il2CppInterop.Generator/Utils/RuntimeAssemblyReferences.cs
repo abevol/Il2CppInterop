@@ -519,7 +519,7 @@ public class RuntimeAssemblyReferences
             var declaringTypeRef = RuntimeReflectionHelper;
             var returnTypeRef = Module.DefaultImporter.ImportType(globalCtx.GetAssemblyByName("mscorlib").NewAssembly.ManifestModule!
                 .GetType("Il2CppSystem.RuntimeTypeHandle"));
-            var signature = MethodSignature.CreateStatic(returnTypeRef.ToTypeSignature(null), 1, new TypeSignature[0]);
+            var signature = MethodSignature.CreateStatic(returnTypeRef.ToTypeSignature(Module.RuntimeContext), 1, new TypeSignature[0]);
             var methodReference = new MemberReference(declaringTypeRef.ToTypeDefOrRef(), "GetRuntimeTypeHandle", signature);
             return Module.DefaultImporter.ImportMethod(methodReference);
         });
