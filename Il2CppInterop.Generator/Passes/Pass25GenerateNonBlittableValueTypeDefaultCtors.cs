@@ -18,7 +18,7 @@ public static class Pass25GenerateNonBlittableValueTypeDefaultCtors
 
                 var emptyCtor = new MethodDefinition(".ctor",
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RuntimeSpecialName |
-                    MethodAttributes.HideBySig, MethodSignature.CreateInstance(assemblyContext.Imports.Module.Void()));
+                    MethodAttributes.HideBySig, AsmResolverExtensions.SigCreateInstance(assemblyContext.Imports.Module.Void()));
 
                 typeContext.NewType.Methods.Add(emptyCtor);
 
@@ -31,7 +31,7 @@ public static class Pass25GenerateNonBlittableValueTypeDefaultCtors
                 bodyBuilder.Add(OpCodes.Ldsfld, typeContext.ClassPointerFieldRef);
                 bodyBuilder.Add(OpCodes.Call, assemblyContext.Imports.IL2CPP_il2cpp_object_new.Value);
                 bodyBuilder.Add(OpCodes.Call,
-                    new MemberReference(typeContext.NewType.BaseType, ".ctor", MethodSignature.CreateInstance(assemblyContext.Imports.Module.Void(), assemblyContext.Imports.Module.IntPtr())));
+                    new MemberReference(typeContext.NewType.BaseType, ".ctor", AsmResolverExtensions.SigCreateInstance(assemblyContext.Imports.Module.Void(), assemblyContext.Imports.Module.IntPtr())));
                 bodyBuilder.Add(OpCodes.Ret);
             }
     }

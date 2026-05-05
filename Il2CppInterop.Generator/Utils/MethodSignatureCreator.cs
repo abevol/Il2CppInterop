@@ -12,6 +12,6 @@ internal static class MethodSignatureCreator
 
     public static MethodSignature CreateMethodSignature(bool isStatic, TypeSignature returnType, int genericParameterCount, params TypeSignature[] parameterTypes)
     {
-        return isStatic ? MethodSignature.CreateStatic(returnType, genericParameterCount, parameterTypes) : MethodSignature.CreateInstance(returnType, genericParameterCount, parameterTypes);
+        return isStatic ? AsmResolverExtensions.SigCreateStatic(returnType, genericParameterCount, parameterTypes) : AsmResolverExtensions.SigCreateInstance(returnType, genericParameterCount, parameterTypes);
     }
 }

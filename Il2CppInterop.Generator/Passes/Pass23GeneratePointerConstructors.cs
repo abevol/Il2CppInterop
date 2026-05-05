@@ -21,7 +21,7 @@ public static class Pass23GeneratePointerConstructors
 
                 var nativeCtor = new MethodDefinition(".ctor",
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RuntimeSpecialName |
-                    MethodAttributes.HideBySig, MethodSignature.CreateInstance(assemblyContext.Imports.Module.Void()));
+                    MethodAttributes.HideBySig, AsmResolverExtensions.SigCreateInstance(assemblyContext.Imports.Module.Void()));
 
                 nativeCtor.AddParameter(assemblyContext.Imports.Module.IntPtr(), "pointer");
 
@@ -32,7 +32,7 @@ public static class Pass23GeneratePointerConstructors
                 ctorBody.Add(OpCodes.Ldarg_0);
                 ctorBody.Add(OpCodes.Ldarg_1);
                 ctorBody.Add(OpCodes.Call,
-                    new MemberReference(newType.BaseType, ".ctor", MethodSignature.CreateInstance(assemblyContext.Imports.Module.Void(), assemblyContext.Imports.Module.IntPtr())));
+                    new MemberReference(newType.BaseType, ".ctor", AsmResolverExtensions.SigCreateInstance(assemblyContext.Imports.Module.Void(), assemblyContext.Imports.Module.IntPtr())));
                 ctorBody.Add(OpCodes.Ret);
             }
     }

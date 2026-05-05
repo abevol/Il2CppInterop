@@ -206,26 +206,26 @@ internal static class CorlibReferences
     public static MemberReference TypeGetTypeFromHandle(this ModuleDefinition module)
     {
         var type = module.Type();
-        MethodSignature signature = MethodSignature.CreateStatic(type, module.RuntimeTypeHandle());
+        MethodSignature signature = AsmResolverExtensions.SigCreateStatic(type, module.RuntimeTypeHandle());
         return new MemberReference(type.ToTypeDefOrRef(), nameof(System.Type.GetTypeFromHandle), signature);
     }
 
     public static MemberReference TypeGetIsValueType(this ModuleDefinition module)
     {
         var type = module.Type();
-        return new MemberReference(type.ToTypeDefOrRef(), "get_IsValueType", MethodSignature.CreateInstance(module.Bool()));
+        return new MemberReference(type.ToTypeDefOrRef(), "get_IsValueType", AsmResolverExtensions.SigCreateInstance(module.Bool()));
     }
 
     public static MemberReference TypeGetFullName(this ModuleDefinition module)
     {
         var type = module.Type();
-        return new MemberReference(type.ToTypeDefOrRef(), "get_FullName", MethodSignature.CreateInstance(module.String()));
+        return new MemberReference(type.ToTypeDefOrRef(), "get_FullName", AsmResolverExtensions.SigCreateInstance(module.String()));
     }
 
     public static MemberReference StringEquals(this ModuleDefinition module)
     {
         var @string = module.String();
-        MethodSignature signature = MethodSignature.CreateStatic(module.Bool(), @string, @string);
+        MethodSignature signature = AsmResolverExtensions.SigCreateStatic(module.Bool(), @string, @string);
         return new MemberReference(@string.ToTypeDefOrRef(), nameof(string.Equals), signature);
     }
 
@@ -256,7 +256,7 @@ internal static class CorlibReferences
 
     private static MemberReference MakeConstructorReference(ModuleDefinition module, ITypeDefOrRef type, params TypeSignature[] parameters)
     {
-        MethodSignature signature = MethodSignature.CreateInstance(module.Void(), parameters);
+        MethodSignature signature = AsmResolverExtensions.SigCreateInstance(module.Void(), parameters);
         return new MemberReference(type, ".ctor", signature);
     }
 }

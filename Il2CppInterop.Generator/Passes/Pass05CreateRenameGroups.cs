@@ -63,7 +63,7 @@ public static class Pass05CreateRenameGroups
         var firstUnobfuscatedType = typeDefinition.BaseType;
         while (firstUnobfuscatedType != null && firstUnobfuscatedType.Name.IsObfuscated(context.Options))
         {
-            firstUnobfuscatedType = firstUnobfuscatedType.Resolve()?.BaseType?.Resolve();
+            firstUnobfuscatedType = firstUnobfuscatedType.AsmResolve()?.BaseType?.AsmResolve();
             inheritanceDepth++;
         }
 
@@ -156,7 +156,7 @@ public static class Pass05CreateRenameGroups
 
     private static string NameOrRename(this TypeSignature typeRef, RewriteGlobalContext context)
     {
-        var resolved = typeRef.Resolve();
+        var resolved = typeRef.AsmResolve();
         if (resolved != null && context.PreviousRenamedTypes.TryGetValue(resolved, out var rename))
             return (rename.StableHash() % (ulong)Math.Pow(10, context.Options.TypeDeobfuscationCharsPerUniquifier))
                 .ToString();

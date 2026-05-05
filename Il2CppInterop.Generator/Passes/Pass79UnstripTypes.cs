@@ -131,7 +131,7 @@ public static class Pass79UnstripTypes
                 return true;
 
             if (fieldDefinition.Signature.FieldType.Namespace?.StartsWith("System") ?? false &&
-                HasNonBlittableFields(fieldDefinition.Signature.FieldType.Resolve()))
+                HasNonBlittableFields(fieldDefinition.Signature.FieldType.AsmResolve()))
                 return true;
         }
 

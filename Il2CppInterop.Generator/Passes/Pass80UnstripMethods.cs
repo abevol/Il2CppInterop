@@ -206,7 +206,7 @@ public static class Pass80UnstripMethods
                 { IsValueType: true } => imports.Il2CppStructArray,
                 _ => imports.Il2CppReferenceArray
             };
-            return new GenericInstanceTypeSignature(genericBase.ToTypeDefOrRef(), false, resolvedElementType);
+            return new GenericInstanceTypeSignature(genericBase.ToTypeDefOrRef(), false, new TypeSignature[] { resolvedElementType });
         }
 
         if (unityType is PointerTypeSignature)
@@ -258,7 +258,7 @@ public static class Pass80UnstripMethods
         {
             var enclosingResolvedType = ResolveTypeInNewAssembliesRaw(context, unityType.DeclaringType.ToTypeSignature(), imports);
             if (enclosingResolvedType == null) return null;
-            var resolvedNestedType = enclosingResolvedType.Resolve()!.NestedTypes
+            var resolvedNestedType = enclosingResolvedType.AsmResolve()!.NestedTypes
                 .FirstOrDefault(it => it.Name == unityType.Name);
 
             return resolvedNestedType?.ToTypeSignature();

@@ -58,8 +58,8 @@ public class AssemblyRewriteContext
 
     public IMethodDefOrRef RewriteMethodRef(IMethodDefOrRef methodRef)
     {
-        var newType = GlobalContext.GetNewTypeForOriginal(methodRef.DeclaringType!.Resolve()!);
-        var newMethod = newType.GetMethodByOldMethod(methodRef.Resolve()!).NewMethod;
+        var newType = GlobalContext.GetNewTypeForOriginal(methodRef.DeclaringType!.AsmResolve()!);
+        var newMethod = newType.GetMethodByOldMethod((MethodDefinition)methodRef.AsmResolve()!).NewMethod;
         return NewAssembly.ManifestModule!.DefaultImporter.ImportMethod(newMethod);
     }
 
@@ -86,11 +86,11 @@ public class AssemblyRewriteContext
 
             var convertedElementType = RewriteTypeRef(elementType);
             if (elementType is GenericParameterSignature)
-                return new GenericInstanceTypeSignature(Imports.Il2CppArrayBase.ToTypeDefOrRef(), false, convertedElementType);
+                return new GenericInstanceTypeSignature(Imports.Il2CppArrayBase.ToTypeDefOrRef(), false, new TypeSignature[] { convertedElementType });
 
             return new GenericInstanceTypeSignature(convertedElementType.IsValueType()
                     ? Imports.Il2CppStructArray.ToTypeDefOrRef()
-                    : Imports.Il2CppReferenceArray.ToTypeDefOrRef(), false, convertedElementType);
+                    : Imports.Il2CppReferenceArray.ToTypeDefOrRef(), false, new TypeSignature[] { convertedElementType });
         }
 
         if (typeRef is GenericParameterSignature genericParameter)
@@ -131,7 +131,7 @@ public class AssemblyRewriteContext
             return sourceModule.DefaultImporter.ImportType(GlobalContext.GetAssemblyByName("mscorlib")
                 .GetTypeByName("System.Attribute").NewType).ToTypeSignature();
 
-        var originalTypeDef = typeRef.Resolve()!;
+        var originalTypeDef = typeRef.AsmResolve()!;
         var targetAssembly = GlobalContext.GetNewAssemblyForOriginal(originalTypeDef.DeclaringModule!.Assembly!);
         var target = targetAssembly.GetContextForOriginalType(originalTypeDef).NewType;
 

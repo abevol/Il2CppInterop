@@ -12,11 +12,11 @@ internal static class ReferenceCreator
 
     public static MemberReference CreateInstanceMethodReference(Utf8String? name, TypeSignature returnType, IMemberRefParent? parent, params TypeSignature[] parameterTypes)
     {
-        return new MemberReference(parent, name, MethodSignature.CreateInstance(returnType, parameterTypes));
+        return new MemberReference(parent, name, AsmResolverExtensions.SigCreateInstance(returnType, parameterTypes));
     }
 
     public static MemberReference CreateStaticMethodReference(Utf8String? name, TypeSignature returnType, IMemberRefParent? parent, params TypeSignature[] parameterTypes)
     {
-        return new MemberReference(parent, name, MethodSignature.CreateStatic(returnType, parameterTypes));
+        return new MemberReference(parent, name, AsmResolverExtensions.SigCreateStatic(returnType, parameterTypes));
     }
 }

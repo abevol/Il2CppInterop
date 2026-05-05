@@ -42,7 +42,6 @@ public class RewriteGlobalContext : IDisposable
             var newModule = new ModuleDefinition(sourceAssembly.ManifestModule?.Name.UnSystemify(options), CorlibReferences.TargetCorlib);
             newAssembly.Modules.Add(newModule);
 
-            newModule.MetadataResolver = new DefaultMetadataResolver(assemblyResolver);
             assemblyResolver.AddToCache(newAssembly);
 
             var assemblyRewriteContext = new AssemblyRewriteContext(this, sourceAssembly, newAssembly);
@@ -102,7 +101,7 @@ public class RewriteGlobalContext : IDisposable
             or GenericInstanceTypeSignature)
             return TypeRewriteContext.TypeSpecifics.ReferenceType;
 
-        var fieldTypeContext = GetNewTypeForOriginal(typeRef.Resolve() ?? throw new($"Could not resolve {typeRef.FullName}"));
+        var fieldTypeContext = GetNewTypeForOriginal(typeRef.AsmResolve() ?? throw new($"Could not resolve {typeRef.FullName}"));
         return fieldTypeContext.ComputedTypeSpecifics;
     }
 

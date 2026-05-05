@@ -194,7 +194,7 @@ internal class DeobfuscationMapGeneratorRunner : IRunner
         {
             if (currentBase == null) break;
             var currentBaseContext =
-                obfType.AssemblyContext.GlobalContext.TryGetNewTypeForOriginal(currentBase.Resolve()!);
+                obfType.AssemblyContext.GlobalContext.TryGetNewTypeForOriginal(currentBase.AsmResolve()!);
             if (currentBaseContext == null || !currentBaseContext.OriginalNameWasObfuscated) break;
 
             inheritanceDepthOfOriginal++;
@@ -230,7 +230,7 @@ internal class DeobfuscationMapGeneratorRunner : IRunner
                 if (tryBase?.Name == currentBase?.Name && tryBase?.Namespace == currentBase?.Namespace)
                     break;
 
-                tryBase = tryBase?.Resolve()?.BaseType;
+                tryBase = tryBase?.AsmResolve()?.BaseType;
                 actualBaseDepth++;
             }
 
